@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DARK_NEXUS // Red Team Lua Script Generator & Terminal</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: JetBrains Mono & Kanit -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        blackhat: {
+                            950: '#050204',
+                            900: '#0d0408',
+                            800: '#180810',
+                            700: '#2a0c1a',
+                            600: '#421229'
+                        },
+                        neon: {
+                            red: '#ff0033',
+                            crimson: '#dc2626',
+                            rose: '#f43f5e',
+                            amber: '#fbbf24',
+                            purple: '#c084fc',
+                            darkred: '#990000'
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['JetBrains Mono', 'monospace'],
+                        sans: ['Kanit', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #050204; }
+        ::-webkit-scrollbar-thumb { background: #421229; border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ff0033; }
+
+        .glow-red { box-shadow: 0 0 15px rgba(255, 0, 51, 0.4); }
+        .glow-red-lg { box-shadow: 0 0 25px rgba(255, 0, 51, 0.6); }
+        .text-glow-red { text-shadow: 0 0 8px rgba(255, 0, 51, 0.7); }
+        .border-glow { border-color: rgba(255, 0, 51, 0.5); }
+
+        .cyber-grid {
+            background-image: linear-gradient(to right, rgba(255, 0, 51, 0.05) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255, 0, 51, 0.05) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        pre {
+            background-color: #050204 !important;
+            border: 1px solid #2a0c1a;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+
+        .scanline {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 40;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 0.3; }
+        }
+        .pulse-border { animation: pulseGlow 2s infinite; }
+    </style>
+</head>
+<body class="bg-blackhat-950 text-gray-200 font-sans h-screen flex flex-col overflow-hidden antialiased cyber-grid relative">
+
+    <div class="scanline"></div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-blackhat-700 bg-blackhat-900/90 backdrop-blur px-4 py-3 flex items-center justify-between z-30 shrink-0">
+        <div class="flex items-center space-x-3">
+            <div class="relative flex items-center justify-center w-10 h-10 rounded-lg bg-black border border-neon-red text-neon-red glow-red font-mono font-bold text-xl">
+                <i class="fa-solid fa-code text-neon-red animate-pulse"></i>
+            </div>
+            <div>
+                <div class="flex items-center space-x-2">
+                    <h1 class="font-mono font-bold text-lg text-white tracking-widest text-glow-red">DARK<span class="text-neon-red">NEXUS</span></h1>
+                    <span class="bg-neon-red/20 text-neon-red text-[10px] px-2 py-0.5 rounded border border-neon-red/50 font-mono font-bold tracking-wider">LUA EXPLOIT ENGINE</span>
+                </div>
+                <p class="text-[11px] text-gray-400 font-mono flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-neon-red animate-ping inline-block"></span>
+                    RED TEAM LUA GENERATOR | ROBLOX EXPLOIT SANDBOX
+                </p>
+            </div>
+        </div>
+
+        <!-- Right Quick Control -->
+        <div class="flex items-center space-x-3 font-mono text-xs">
+            <div class="hidden sm:flex items-center gap-2 bg-blackhat-800/80 px-3 py-1.5 rounded border border-blackhat-700">
+                <i class="fa-solid fa-microchip text-neon-amber"></i>
+                <span class="text-gray-400">ENGINE:</span>
+                <span class="text-neon-red font-bold">GEMINI 3 FLASH</span>
+            </div>
+            <button id="clearAllBtn" class="bg-blackhat-800 hover:bg-neon-red/20 text-gray-400 hover:text-neon-red border border-blackhat-700 hover:border-neon-red p-2 rounded transition" title="Reset Workspace">
+                <i class="fa-solid fa-arrows-rotate"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="flex-1 flex overflow-hidden relative z-10">
+
+        <!-- Left Controls / Script Config Panel -->
+        <aside class="w-80 md:w-96 bg-blackhat-900 border-r border-blackhat-700 flex flex-col shrink-0 overflow-y-auto">
+            <div class="p-4 border-b border-blackhat-700 bg-blackhat-950/60">
+                <h2 class="font-mono font-bold text-sm text-neon-red flex items-center gap-2 text-glow-red">
+                    <i class="fa-solid fa-sliders"></i> SCRIPT SPECIFICATIONS
+                </h2>
+                <p class="text-xs text-gray-400 mt-1">กำหนดประเภทและคุณสมบัติของ Roblox Lua Script ที่ต้องการให้ AI สร้าง</p>
+            </div>
+
+            <form id="generatorForm" class="p-4 space-y-4 font-mono text-xs">
+
+                <!-- Preset Categories -->
+                <div>
+                    <label class="block text-gray-300 font-semibold mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-layer-group text-neon-rose"></i> ประเภทสคริปต์ (Script Category)
+                    </label>
+                    <select id="scriptType" class="w-full bg-blackhat-950 border border-blackhat-700 focus:border-neon-red rounded p-2.5 text-gray-200 outline-none transition">
+                        <option value="autofarm">🌾 Auto Farm / Quest Loop (ฟาร์มออโต้)</option>
+                        <option value="esp">👁️ ESP / Wallhack (มองทะลุ/แสดงตำแหน่งคน-กล่อง)</option>
+                        <option value="aimbot">🎯 Aimbot / Silent Aim (ล็อคเป้ายิง)</option>
+                        <option value="movement">⚡ Movement / Fly / Speed / Noclip (เคลื่อนที่เร็ว/บิน)</option>
+                        <option value="remotespy">🕵️ Remote Spy / Event Hook (จับสัญญาณ RemoteEvent)</option>
+                        <option value="gui">🖥️ Rayfield / Orion UI Hub (สร้างเมนู Script Hub)</option>
+                        <option value="custom">⚙️ Custom Script (กำหนดเองแบบละเอียด)</option>
+                    </select>
+                </div>
+
+                <!-- Custom Prompt / Instructions -->
+                <div>
+                    <label class="block text-gray-300 font-semibold mb-1 flex items-center gap-1.5">
+                        <i class="fa-solid fa-terminal text-neon-amber"></i> รายละเอียดที่ต้องการ (Custom Requirements)
+                    </label>
+                    <textarea 
+                        id="customPrompt" 
+                        rows="4" 
+                        placeholder="ระบุสิ่งที่ต้องการเพิ่มเติม เช่น:
+- ให้สร้าง GUI ใช้ Rayfield Library
+- เพิ่มปุ่ม Toggle เปิด-ปิด Speed / Fly
+- มีระบบ Auto Safe Teleport เวลาเลือดลด
+- หรือวางโค้ดที่อยากให้ดัดแปลงแก้ไข..." 
+                        class="w-full bg-blackhat-950 border border-blackhat-700 focus:border-neon-red rounded p-2.5 text-gray-200 outline-none resize-none transition placeholder-gray-600 text-xs"></textarea>
+                </div>
+
+                <!-- Target Game / Context -->
+                <div>
+                    <label class="block text-gray-300 font-semibold mb-1 flex items-center gap-1.5">
+                        <i class="fa-solid fa-gamepad text-neon-purple"></i> เกมเป้าหมาย (Target Game Context)
+                    </label>
+                    <input 
+                        type="text" 
+                        id="targetGame" 
+                        placeholder="เช่น Blox Fruits, Pet Simulator, BedWars หรือ General Roblox Game" 
+                        class="w-full bg-blackhat-950 border border-blackhat-700 focus:border-neon-red rounded p-2.5 text-gray-200 outline-none transition placeholder-gray-600">
+                </div>
+
+                <!-- Advanced Options -->
+                <div class="border border-blackhat-700 rounded p-3 bg-blackhat-950/40 space-y-3">
+                    <div class="text-[11px] font-bold text-gray-400 border-b border-blackhat-700 pb-1 flex justify-between items-center">
+                        <span>ADVANCED OPTIONS</span>
+                        <i class="fa-solid fa-gear text-neon-red"></i>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <label class="text-gray-300 cursor-pointer" for="optObfuscate">
+                            <i class="fa-solid fa-lock text-neon-amber"></i> จำลอง Obfuscation
+                        </label>
+                        <input type="checkbox" id="optObfuscate" class="accent-neon-red w-4 h-4 rounded cursor-pointer">
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <label class="text-gray-300 cursor-pointer" for="optComments">
+                            <i class="fa-solid fa-comment-code text-neon-rose"></i> ใส่คำอธิบายภาษาไทย (Comment)
+                        </label>
+                        <input type="checkbox" id="optComments" checked class="accent-neon-red w-4 h-4 rounded cursor-pointer">
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <label class="text-gray-300 cursor-pointer" for="optAntiCheat">
+                            <i class="fa-solid fa-shield-cat text-neon-purple"></i> Bypass Check (pcall / task.spawn)
+                        </label>
+                        <input type="checkbox" id="optAntiCheat" checked class="accent-neon-red w-4 h-4 rounded cursor-pointer">
+                    </div>
+                </div>
+
+                <!-- Quick Presets -->
+                <div>
+                    <label class="block text-gray-400 text-[11px] mb-1.5">ตัวอย่างคำสั่งด่วน (QUICK PRESETS):</label>
+                    <div class="grid grid-cols-2 gap-1.5 text-[10px]">
+                        <button type="button" onclick="setPreset('esp')" class="bg-blackhat-800 hover:bg-blackhat-700 text-gray-300 p-2 rounded border border-blackhat-700 text-left truncate">
+                            👁️ ESP Players & Items
+                        </button>
+                        <button type="button" onclick="setPreset('autofarm')" class="bg-blackhat-800 hover:bg-blackhat-700 text-gray-300 p-2 rounded border border-blackhat-700 text-left truncate">
+                            🌾 Auto Click / Attack
+                        </button>
+                        <button type="button" onclick="setPreset('fly')" class="bg-blackhat-800 hover:bg-blackhat-700 text-gray-300 p-2 rounded border border-blackhat-700 text-left truncate">
+                            ✈️ Fly / Noclip Gui
+                        </button>
+                        <button type="button" onclick="setPreset('rayfield')" class="bg-blackhat-800 hover:bg-blackhat-700 text-gray-300 p-2 rounded border border-blackhat-700 text-left truncate">
+                            🖥️ Full Script Hub (Rayfield)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Generate Button -->
+                <button 
+                    type="submit" 
+                    id="generateBtn"
+                    class="w-full bg-neon-red hover:bg-red-600 text-white font-bold py-3 px-4 rounded transition flex items-center justify-center gap-2 glow-red text-sm font-mono tracking-wider">
+                    <i class="fa-solid fa-bolt"></i>
+                    <span>GENERATE LUA SCRIPT</span>
+                </button>
+
+            </form>
+        </aside>
+
+        <!-- Right Main View Terminal & Output -->
+        <main class="flex-1 flex flex-col bg-blackhat-950 relative overflow-hidden">
+            
+            <!-- Output Header Bar -->
+            <div class="bg-blackhat-900 border-b border-blackhat-700 px-4 py-2.5 flex items-center justify-between font-mono text-xs z-10 shrink-0">
+                <div class="flex items-center space-x-3">
+                    <span class="text-neon-red flex items-center gap-2 font-bold">
+                        <i class="fa-solid fa-terminal"></i> OUTPUT_SCRIPT.lua
+                    </span>
+                    <span id="statusTag" class="text-[10px] bg-blackhat-800 text-gray-400 px-2 py-0.5 rounded border border-blackhat-700">
+                        READY
+                    </span>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <button onclick="copyGeneratedCode()" id="copyBtn" class="bg-blackhat-800 hover:bg-neon-red/20 text-gray-300 hover:text-neon-red border border-blackhat-700 hover:border-neon-red px-3 py-1 rounded transition flex items-center gap-1.5">
+                        <i class="fa-regular fa-copy"></i>
+                        <span>Copy Code</span>
+                    </button>
+                    <button onclick="downloadLuaFile()" class="bg-blackhat-800 hover:bg-neon-red/20 text-gray-300 hover:text-neon-red border border-blackhat-700 hover:border-neon-red px-3 py-1 rounded transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-download"></i>
+                        <span>Download .lua</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Terminal Output Scrollable Area -->
+            <div id="outputArea" class="flex-1 overflow-y-auto p-4 md:p-6 font-mono text-xs space-y-4">
+                
+                <!-- Initial Welcome Box -->
+                <div id="welcomeBox" class="border border-blackhat-700 bg-blackhat-900/60 rounded-xl p-6 max-w-3xl mx-auto my-8 relative overflow-hidden">
+                    <div class="absolute -right-4 -bottom-4 text-8xl text-neon-red/10 font-mono">
+                        <i class="fa-solid fa-terminal"></i>
+                    </div>
+                    <div class="flex items-center space-x-3 mb-3">
+                        <span class="p-2 bg-neon-red/20 text-neon-red rounded border border-neon-red/40">
+                            <i class="fa-solid fa-user-ninja text-xl"></i>
+                        </span>
+                        <div>
+                            <h3 class="font-bold text-white text-base">DARK_NEXUS LUA SCRIPT GENERATOR</h3>
+                            <p class="text-gray-400 text-xs">ระบบจำลองและสร้างสคริปต์ Roblox Lua เพื่อการศึกษาและทดสอบ Red Team</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2 text-gray-300 text-xs leading-relaxed border-t border-blackhat-700 pt-3">
+                        <p>🔹 เลือกประเภทสคริปต์ที่ต้องการจากเมนูด้านซ้าย เช่น <strong>Auto Farm, ESP, Aimbot, Remote Spy</strong> หรือ <strong>Script Hub</strong></p>
+                        <p>🔹 ระบุรายละเอียดพิเศษและชื่อเกมเพื่อให้ AI ปรับแต่งโครงสร้างโค้ดให้สอดคล้องกับการใช้งาน</p>
+                        <p>🔹 โค้ดทั้งหมดจะใช้ฟังก์ชันมาตรฐานของ Roblox Lua เช่น <code class="text-neon-amber">game:GetService()</code>, <code class="text-neon-amber">task.spawn()</code>, และ <code class="text-neon-amber">pcall()</code></p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="loadingOverlay" class="hidden absolute inset-0 bg-black/80 backdrop-blur-sm z-30 flex flex-col items-center justify-center space-y-4">
+                <div class="relative w-16 h-16 flex items-center justify-center">
+                    <div class="absolute inset-0 rounded-full border-4 border-neon-red/20 border-t-neon-red animate-spin"></div>
+                    <i class="fa-solid fa-code text-neon-red text-xl animate-pulse"></i>
+                </div>
+                <div class="font-mono text-center">
+                    <div class="text-neon-red font-bold text-sm tracking-wider animate-pulse">GENERATING LUA CODE...</div>
+                    <div class="text-gray-500 text-xs mt-1">กำลังประมวลผลคำสั่งด้วย Gemini 3 Flash AI</div>
+                </div>
+            </div>
+
+            <!-- Code Explanation / Chat Helper Panel at Bottom -->
+            <div class="border-t border-blackhat-700 bg-blackhat-900/90 p-3 font-mono text-xs flex items-center gap-2">
+                <input 
+                    type="text" 
+                    id="quickAskInput" 
+                    placeholder="ถาม AI เพิ่มเติมเกี่ยวกับโค้ด หรือสั่งให้แก้สคริปต์ท่อนไหน..." 
+                    class="flex-1 bg-blackhat-950 border border-blackhat-700 focus:border-neon-red rounded px-3 py-2 text-gray-200 outline-none text-xs">
+                <button 
+                    onclick="handleQuickAsk()" 
+                    class="bg-blackhat-800 hover:bg-neon-red text-gray-300 hover:text-white border border-blackhat-700 hover:border-neon-red px-4 py-2 rounded transition font-bold flex items-center gap-1.5 shrink-0">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>ส่งคำถาม</span>
+                </button>
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-16 right-4 bg-blackhat-800 border border-neon-red text-white font-mono text-xs px-4 py-3 rounded-lg shadow-2xl flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <i class="fa-solid fa-circle-check text-neon-red" id="toastIcon"></i>
+        <span id="toastMessage">การทำงานสำเร็จ</span>
+    </div>
+
+    <!-- System Logic -->
+    <script>
+        // System Prompt specifically tailored for Red Team Lua Script Generation
+        const LUA_GENERATOR_SYSTEM_PROMPT = `You are DARK_NEXUS, an expert Red Team Security Researcher and master Roblox Lua developer.
+Your main task is to generate clean, functional, and well-structured Roblox Lua scripts according to the user's requirements.
+
+Guidelines:
+1. Generate complete, runnable Roblox Lua code with proper syntax and comments in Thai explaining how the code works step-by-step.
+2. Use standard Roblox services safely (e.g. Players, RunService, UserInputService, TweenService, HttpService).
+3. Structure the output clearly with formatted Markdown code blocks \`\`\`lua ... \`\`\`.
+4. Include helpful usage notes on how to test the script safely in Roblox Studio or sandbox environments.
+5. Provide high quality, modular code with safety error handling (pcall, task.spawn, task.wait).`;
+
+        // DOM elements
+        const generatorForm = document.getElementById('generatorForm');
+        const scriptType = document.getElementById('scriptType');
+        const customPrompt = document.getElementById('customPrompt');
+        const targetGame = document.getElementById('targetGame');
+        const optObfuscate = document.getElementById('optObfuscate');
+        const optComments = document.getElementById('optComments');
+        const optAntiCheat = document.getElementById('optAntiCheat');
+        const outputArea = document.getElementById('outputArea');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const statusTag = document.getElementById('statusTag');
+        const quickAskInput = document.getElementById('quickAskInput');
+
+        let lastGeneratedCode = "";
+        let conversationHistory = [];
+
+        // Preset Helper
+        function setPreset(type) {
+            scriptType.value = type;
+            if (type === 'esp') {
+                customPrompt.value = "สร้าง ESP มองเห็นผู้เล่นทุกคน แสดงชื่อ, ระยะห่าง (Distance), และวาดกรอบ Box รอบตัว";
+            } else if (type === 'autofarm') {
+                customPrompt.value = "สร้างระบบ Auto Clicker / Auto Attack ร่วมกับระบบตรวจจับมอนสเตอร์ใกล้ที่สุดแล้วเดินเข้าหาอัตโนมัติ";
+            } else if (type === 'fly') {
+                customPrompt.value = "สร้างระบบ Fly GUI มีปุ่มเปิด-ปิด ปรับความเร็วการบินได้ด้วย Slider";
+            } else if (type === 'rayfield') {
+                customPrompt.value = "สร้าง Script Hub เมนูสวยๆ โดยใช้ Rayfield Library รวมฟังก์ชัน Speed, Jump, ESP และ Teleport";
+            }
+            showToast('โหลดคำสั่งสำเร็จแล้ว');
+        }
+
+        // Form Submit
+        generatorForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            generateScript();
+        });
+
+        async function generateScript() {
+            const category = scriptType.options[scriptType.selectedIndex].text;
+            const userReq = customPrompt.value.trim();
+            const gameContext = targetGame.value.trim() || "General Roblox Game";
+            const obfuscate = optObfuscate.checked;
+            const comments = optComments.checked;
+            const anticheat = optAntiCheat.checked;
+
+            const promptText = `กรุณาสร้างสคริปต์ Roblox Lua โดยมีเงื่อนไขดังนี้:
+- **หมวดหมู่สคริปต์:** ${category}
+- **เกมเป้าหมาย:** ${gameContext}
+- **รายละเอียดที่ต้องการ:** ${userReq || 'สร้างสคริปต์พื้นฐานที่ทำงานสมบูรณ์ตามหมวดหมู่นี้'}
+- **ต้องการใส่ คำอธิบายโค้ดภาษาไทย (Comments):** ${comments ? 'ใช่' : 'ไม่'}
+- **ใช้งาน pcall/task.spawn เพื่อความปลอดภัย:** ${anticheat ? 'ใช่' : 'ไม่'}
+- **จำลอง Obfuscate/โครงสร้างซับซ้อน:** ${obfuscate ? 'ใช่' : 'ไม่'}`;
+
+            const welcomeBox = document.getElementById('welcomeBox');
+            if (welcomeBox) welcomeBox.remove();
+
+            loadingOverlay.classList.remove('hidden');
+            statusTag.textContent = "GENERATING...";
+            statusTag.className = "text-[10px] bg-neon-red/20 text-neon-red px-2 py-0.5 rounded border border-neon-red/40 animate-pulse";
+
+            // Add user turn to conversation history
+            conversationHistory = [
+                { role: 'user', parts: [{ text: promptText }] }
+            ];
+
+            try {
+                const responseText = await fetchGeminiLua(conversationHistory);
+                
+                // Save model response turn
+                conversationHistory.push({ role: 'model', parts: [{ text: responseText }] });
+                
+                renderOutputResponse(promptText, responseText);
+                extractCodeFromResponse(responseText);
+
+                statusTag.textContent = "COMPLETED";
+                statusTag.className = "text-[10px] bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded border border-emerald-800";
+            } catch (err) {
+                console.error("Error generating script:", err);
+                appendErrorMessage("เกิดข้อผิดพลาดในการสร้างสคริปต์: " + err.message);
+                statusTag.textContent = "ERROR";
+                statusTag.className = "text-[10px] bg-red-950 text-red-400 px-2 py-0.5 rounded border border-red-800";
+            } finally {
+                loadingOverlay.classList.add('hidden');
+            }
+        }
+
+        // Quick Ask Input Handler
+        async function handleQuickAsk() {
+            const query = quickAskInput.value.trim();
+            if (!query) return;
+
+            quickAskInput.value = '';
+            
+            appendAskMessage('user', query);
+            conversationHistory.push({ role: 'user', parts: [{ text: query }] });
+
+            loadingOverlay.classList.remove('hidden');
+
+            try {
+                const responseText = await fetchGeminiLua(conversationHistory);
+                conversationHistory.push({ role: 'model', parts: [{ text: responseText }] });
+                appendAskMessage('assistant', responseText);
+                extractCodeFromResponse(responseText);
+            } catch (err) {
+                appendErrorMessage("ไม่สามารถส่งคำถามได้: " + err.message);
+            } finally {
+                loadingOverlay.classList.add('hidden');
+            }
+        }
+
+        // Gemini API Request (gemini-3-flash-preview)
+        async function fetchGeminiLua(history) {
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: history,
+                systemInstruction: {
+                    parts: [{ text: LUA_GENERATOR_SYSTEM_PROMPT }]
+                },
+                generationConfig: {
+                    temperature: 0.4,
+                    maxOutputTokens: 3000
+                }
+            };
+
+            let retries = 3;
+            let delay = 1000;
+
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                    const data = await response.json();
+                    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (text) return text;
+                    throw new Error("Invalid structure");
+                } catch (err) {
+                    if (i === retries - 1) throw err;
+                    await new Promise(res => setTimeout(res, delay));
+                    delay *= 2;
+                }
+            }
+        }
+
+        // Render Generated Response
+        function renderOutputResponse(req, text) {
+            const block = document.createElement('div');
+            block.className = "bg-blackhat-900 border border-blackhat-700 rounded-xl p-4 md:p-5 space-y-3";
+
+            const formattedText = parseMarkdown(text);
+
+            block.innerHTML = `
+                <div class="flex items-center justify-between border-b border-blackhat-700 pb-2 font-mono text-[11px]">
+                    <span class="text-neon-red font-bold flex items-center gap-1.5">
+                        <i class="fa-solid fa-code"></i> GENERATED_LUA_SCRIPT
+                    </span>
+                    <span class="text-gray-500">${new Date().toLocaleTimeString()}</span>
+                </div>
+                <div class="message-content text-gray-200 leading-relaxed font-sans text-xs space-y-2">
+                    ${formattedText}
+                </div>
+            `;
+
+            outputArea.appendChild(block);
+            outputArea.scrollTop = outputArea.scrollHeight;
+        }
+
+        function appendAskMessage(role, text) {
+            const div = document.createElement('div');
+            div.className = `p-3.5 rounded-lg border text-xs font-sans ${
+                role === 'user' 
+                ? 'bg-blackhat-800 border-blackhat-700 text-gray-200 ml-8' 
+                : 'bg-blackhat-900 border-neon-red/40 text-gray-100 mr-8'
+            }`;
+
+            const formatted = parseMarkdown(text);
+
+            div.innerHTML = `
+                <div class="font-mono text-[10px] text-gray-400 border-b border-white/5 pb-1 mb-2 flex justify-between">
+                    <span>${role === 'user' ? 'USER_QUERY' : 'DARK_NEXUS_AI'}</span>
+                </div>
+                <div class="space-y-2 leading-relaxed">${formatted}</div>
+            `;
+
+            outputArea.appendChild(div);
+            outputArea.scrollTop = outputArea.scrollHeight;
+        }
+
+        function appendErrorMessage(msg) {
+            const div = document.createElement('div');
+            div.className = "bg-red-950/60 border border-neon-red text-neon-red p-3 rounded font-mono text-xs";
+            div.innerHTML = `<i class="fa-solid fa-circle-exclamation mr-2"></i> ${msg}`;
+            outputArea.appendChild(div);
+            outputArea.scrollTop = outputArea.scrollHeight;
+        }
+
+        // Extract raw Lua Code for copying/downloading
+        function extractCodeFromResponse(text) {
+            const match = text.match(/```lua([\s\S]*?)```/i) || text.match(/```([\s\S]*?)```/i);
+            if (match && match[1]) {
+                lastGeneratedCode = match[1].trim();
+            } else {
+                lastGeneratedCode = text;
+            }
+        }
+
+        // Copy Code Helper
+        function copyGeneratedCode() {
+            if (!lastGeneratedCode) {
+                showToast('ยังไม่มีโค้ดให้คัดลอก');
+                return;
+            }
+            const temp = document.createElement('textarea');
+            temp.value = lastGeneratedCode;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+            showToast('คัดลอก Lua Code เรียบร้อยแล้ว!');
+        }
+
+        // Download .lua file
+        function downloadLuaFile() {
+            if (!lastGeneratedCode) {
+                showToast('ยังไม่มีโค้ดให้ดาวน์โหลด');
+                return;
+            }
+            const blob = new Blob([lastGeneratedCode], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `dark_nexus_script_${Date.now()}.lua`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+            showToast('ดาวน์โหลดไฟล์ .lua เรียบร้อย');
+        }
+
+        // Simple Markdown Parser
+        function parseMarkdown(text) {
+            if (!text) return '';
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/```(\w*)\n([\s\S]*?)```/g, function(match, lang, code) {
+                    return `<div class="my-3 rounded-lg overflow-hidden border border-blackhat-700 font-mono text-xs">
+                        <div class="bg-blackhat-950 px-3 py-1.5 text-gray-400 text-[10px] flex justify-between border-b border-blackhat-700">
+                            <span class="text-neon-amber font-bold">${lang.toUpperCase() || 'LUA'} CODE</span>
+                            <button onclick="copyCodeSnippet(this)" class="hover:text-neon-red transition flex items-center gap-1">
+                                <i class="fa-regular fa-copy"></i> Copy
+                            </button>
+                        </div>
+                        <pre class="m-0 bg-blackhat-950 p-3 overflow-x-auto"><code class="text-emerald-400 font-mono">${code.trim()}</code></pre>
+                    </div>`;
+                })
+                .replace(/`([^`]+)`/g, '<code class="bg-blackhat-950 border border-blackhat-700 text-neon-red font-mono px-1.5 py-0.5 rounded text-[11px]">$1</code>')
+                .replace(/\*\*([^*]+)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
+                .replace(/\n\n/g, '</p><p class="mt-2">')
+                .replace(/\n/g, '<br>');
+        }
+
+        window.copyCodeSnippet = function(btn) {
+            const code = btn.closest('.my-3').querySelector('code').innerText;
+            const temp = document.createElement('textarea');
+            temp.value = code;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+            showToast('คัดลอกส่วนของโค้ดแล้ว');
+        };
+
+        // Clear Workspace
+        document.getElementById('clearAllBtn').addEventListener('click', () => {
+            if (confirm('ต้องการล้างหน้าต่างคำสั่งและสร้างใหม่หรือไม่?')) {
+                outputArea.innerHTML = `
+                    <div id="welcomeBox" class="border border-blackhat-700 bg-blackhat-900/60 rounded-xl p-6 max-w-3xl mx-auto my-8 relative overflow-hidden">
+                        <div class="flex items-center space-x-3 mb-3">
+                            <span class="p-2 bg-neon-red/20 text-neon-red rounded border border-neon-red/40">
+                                <i class="fa-solid fa-user-ninja text-xl"></i>
+                            </span>
+                            <div>
+                                <h3 class="font-bold text-white text-base">DARK_NEXUS LUA SCRIPT GENERATOR</h3>
+                                <p class="text-gray-400 text-xs">เลือกประเภทสคริปต์ที่ต้องการแล้วกด GENERATE LUA SCRIPT</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                lastGeneratedCode = "";
+                conversationHistory = [];
+                statusTag.textContent = "READY";
+                statusTag.className = "text-[10px] bg-blackhat-800 text-gray-400 px-2 py-0.5 rounded border border-blackhat-700";
+                showToast('ล้างหน้าจอสำเร็จ');
+            }
+        });
+
+        // Toast Helper
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            toastMessage.textContent = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
